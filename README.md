@@ -2,6 +2,20 @@
 
 A pixel-art cat that lives in the empty strip next to the macOS Dock. It idles, plays, stretches and naps, and reacts when you click it.
 
+| Walk | Sleep | Ball | Moth |
+| --- | --- | --- | --- |
+| ![Walking](docs/previews/walk.gif) | ![Sleeping](docs/previews/sleep.gif) | ![Playing with a ball](docs/previews/play-ball.gif) | ![Chasing a moth](docs/previews/play-moth.gif) |
+
+| Groom | Loaf | Stretch | Yawn |
+| --- | --- | --- | --- |
+| ![Grooming](docs/previews/groom.gif) | ![Loafing](docs/previews/loaf.gif) | ![Stretching](docs/previews/stretch.gif) | ![Yawning](docs/previews/yawn.gif) |
+
+Click reactions:
+
+| Purr | Mew | Swat | Startle |
+| --- | --- | --- | --- |
+| ![Purring](docs/previews/purr.gif) | ![Mewing](docs/previews/mew.gif) | ![Swatting a butterfly](docs/previews/swat.gif) | ![Startled](docs/previews/startle.gif) |
+
 ## Use
 
 - The cat sits in a transparent, always-on-top window at the bottom corner of the main display. Clicks outside the cat pass through to whatever is behind it.
@@ -19,6 +33,7 @@ pnpm typecheck    # tsc and cargo check
 pnpm test         # node tests for the cat, cargo tests for the shell
 pnpm install:mac  # build Mewdock.app and copy it to /Applications
 pnpm icons        # regenerate app and tray icons from the sprite data
+pnpm previews     # regenerate the README GIFs in docs/previews from the real behavior code
 ```
 
 The app is not signed with a Developer ID, so a copy built on another Mac may be blocked by Gatekeeper.

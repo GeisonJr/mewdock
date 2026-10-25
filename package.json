@@ -9,6 +9,7 @@
     "build": "tauri build --bundles app",
     "install:mac": "pnpm build && rm -rf /Applications/Mewdock.app && ditto src-tauri/target/release/bundle/macos/Mewdock.app /Applications/Mewdock.app",
     "icons": "node scripts/make-icons.ts && tauri icon src-tauri/icons/app-icon.png",
+    "previews": "node scripts/make-previews.ts",
     "web:dev": "vite",
     "web:build": "vite build",
     "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml",
