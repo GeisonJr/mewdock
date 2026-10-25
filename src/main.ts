@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Cat, type Rect } from "./cat/index.ts";
+import { playReaction } from "./sound.ts";
 
 const FPS = 15;
 
@@ -9,6 +10,7 @@ const ctx = canvas.getContext("2d")!;
 const cat = new Cat(window.innerWidth, window.innerHeight);
 
 let paused = false;
+let muted = false;
 
 function resize(): void {
   const dpr = window.devicePixelRatio;
@@ -65,12 +67,21 @@ function tick(): void {
 }
 
 canvas.addEventListener("pointerdown", (event) => {
-  if (contains(cat.hitRect(), event.offsetX, event.offsetY)) cat.react();
+  if (!contains(cat.hitRect(), event.offsetX, event.offsetY)) return;
+  const reaction = cat.react();
+  if (reaction !== null && !muted) playReaction(reaction);
 });
 
 void listen<boolean>("paused", (event) => {
   paused = event.payload;
   cat.setPaused(paused);
+});
+
+void invoke<boolean>("is_muted").then((value) => {
+  muted = value;
+});
+void listen<boolean>("muted", (event) => {
+  muted = event.payload;
 });
 
 window.addEventListener("resize", resize);

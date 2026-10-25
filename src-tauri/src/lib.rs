@@ -22,7 +22,7 @@ const PLACE_EVERY_TICKS: u32 = 40;
 #[derive(Default)]
 struct Shared {
     hit_rect: Mutex<HitRect>,
-    side: Mutex<Side>,
+    settings: Mutex<Settings>,
 }
 
 type SharedState = Arc<Shared>;
@@ -30,6 +30,11 @@ type SharedState = Arc<Shared>;
 #[tauri::command]
 fn set_hit_rect(rect: HitRect, state: State<'_, SharedState>) {
     *state.hit_rect.lock().unwrap() = rect;
+}
+
+#[tauri::command]
+fn is_muted(state: State<'_, SharedState>) -> bool {
+    state.settings.lock().unwrap().muted
 }
 
 fn place(window: &WebviewWindow, side: Side) {
@@ -55,7 +60,7 @@ fn watch_cursor(app: AppHandle, window: WebviewWindow, shared: SharedState) {
         let mut ticks: u32 = 0;
         loop {
             if ticks % PLACE_EVERY_TICKS == 0 {
-                place(&window, *shared.side.lock().unwrap());
+                place(&window, shared.settings.lock().unwrap().side);
             }
             ticks = ticks.wrapping_add(1);
 
@@ -100,6 +105,7 @@ fn build_tray(app: &AppHandle, shared: SharedState, settings: Settings) -> tauri
         settings.side == Side::Right,
         None::<&str>,
     )?;
+    let sound = CheckMenuItem::with_id(app, "sound", "Sound", true, !settings.muted, None::<&str>)?;
     let login = CheckMenuItem::with_id(
         app,
         "login",
@@ -113,6 +119,7 @@ fn build_tray(app: &AppHandle, shared: SharedState, settings: Settings) -> tauri
         app,
         &[
             &pause,
+            &sound,
             &PredefinedMenuItem::separator(app)?,
             &left,
             &right,
@@ -138,11 +145,25 @@ fn build_tray(app: &AppHandle, shared: SharedState, settings: Settings) -> tauri
                 let side = if id == "side-left" { Side::Left } else { Side::Right };
                 let _ = left.set_checked(side == Side::Left);
                 let _ = right.set_checked(side == Side::Right);
-                *shared.side.lock().unwrap() = side;
-                Settings { side }.save(app);
+                let settings = {
+                    let mut settings = shared.settings.lock().unwrap();
+                    settings.side = side;
+                    *settings
+                };
+                settings.save(app);
                 if let Some(window) = app.get_webview_window("main") {
                     place(&window, side);
                 }
+            }
+            "sound" => {
+                let muted = !sound.is_checked().unwrap_or(true);
+                let settings = {
+                    let mut settings = shared.settings.lock().unwrap();
+                    settings.muted = muted;
+                    *settings
+                };
+                settings.save(app);
+                let _ = app.emit_to("main", "muted", muted);
             }
             "login" => {
                 let wanted = login.is_checked().unwrap_or(false);
@@ -163,14 +184,14 @@ fn build_tray(app: &AppHandle, shared: SharedState, settings: Settings) -> tauri
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
-        .invoke_handler(tauri::generate_handler![set_hit_rect])
+        .invoke_handler(tauri::generate_handler![set_hit_rect, is_muted])
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             let settings = Settings::load(app.handle());
             let shared = SharedState::default();
-            *shared.side.lock().unwrap() = settings.side;
+            *shared.settings.lock().unwrap() = settings;
             app.manage(Arc::clone(&shared));
 
             let window = app

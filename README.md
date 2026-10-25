@@ -5,8 +5,8 @@ A pixel-art cat that lives in the empty strip next to the macOS Dock. It idles, 
 ## Use
 
 - The cat sits in a transparent, always-on-top window at the bottom corner of the main display. Clicks outside the cat pass through to whatever is behind it.
-- Click the cat for a random reaction.
-- Menu bar icon: Pause, Left or Right of the Dock (remembered), Start at Login (off by default, uses a LaunchAgent), Quit.
+- Click the cat for a random reaction, with a synthesized mew, purr, swat whoosh, chirp, trill or yawn.
+- Menu bar icon: Pause, Sound (remembered), Left or Right of the Dock (remembered), Start at Login (off by default, uses a LaunchAgent), Quit.
 
 ## Develop
 

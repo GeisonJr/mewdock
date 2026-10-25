@@ -1,6 +1,8 @@
-import { CatBehavior } from "./behavior.ts";
+import { CatBehavior, type Behavior } from "./behavior.ts";
 import { cellLeft, cellTop, drawCat } from "./render.ts";
 import { BOUNDS, FRAME_COLS, PIXEL_SCALE } from "./sprites.ts";
+
+export type { Behavior };
 
 export interface Rect {
   x: number;
@@ -28,8 +30,8 @@ export class Cat {
     drawCat(ctx, this.#behavior, this.#width, this.#height);
   }
 
-  react(): void {
-    this.#behavior.react();
+  react(): Behavior | null {
+    return this.#behavior.react();
   }
 
   setPaused(paused: boolean): void {

@@ -10,6 +10,7 @@ use crate::placement::Side;
 #[serde(default)]
 pub struct Settings {
     pub side: Side,
+    pub muted: bool,
 }
 
 fn path(app: &AppHandle) -> Option<PathBuf> {

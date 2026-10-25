@@ -173,8 +173,9 @@ export class CatBehavior {
     this.#paused = paused;
   }
 
-  react(): void {
-    if (this.#paused) return;
+  /** Returns the reaction it started, or null while paused. */
+  react(): Behavior | null {
+    if (this.#paused) return null;
     const asleep = this.#behavior === "sleep" || this.#behavior === "settle";
     const pool: readonly Behavior[] = asleep ? WAKE_UPS : REACTIONS;
     const options = pool.filter((b) => b !== this.#lastReaction && b !== this.#behavior);
@@ -183,6 +184,7 @@ export class CatBehavior {
     this.#pending = null;
     if (asleep) this.#awakeMs = 0;
     this.#start(choice);
+    return choice;
   }
 
   update(dtMs: number): void {

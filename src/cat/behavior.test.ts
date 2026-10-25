@@ -71,7 +71,7 @@ test("react interrupts with a reaction and never repeats the previous one", () =
   for (let i = 0; i < 400; i++) {
     for (let k = 0; k < i % 40; k++) cat.update(STEP);
     const before = cat.behavior;
-    cat.react();
+    assert.equal(cat.react(), cat.behavior);
     assert.ok(REACTIONS.includes(cat.behavior), cat.behavior);
     assert.notEqual(cat.behavior, before);
     assert.notEqual(cat.behavior, last);
@@ -95,7 +95,7 @@ test("a paused cat does not move, change frame or change behavior", () => {
   cat.setPaused(true);
   const snapshot = [cat.x, cat.sprite, cat.behavior, cat.elapsed, cat.facing];
   for (let i = 0; i < 2000; i++) cat.update(STEP);
-  cat.react();
+  assert.equal(cat.react(), null);
   assert.deepEqual([cat.x, cat.sprite, cat.behavior, cat.elapsed, cat.facing], snapshot);
   cat.setPaused(false);
   cat.update(STEP);
