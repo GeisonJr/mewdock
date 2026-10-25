@@ -1,3 +1,7 @@
+import { CatBehavior } from "./behavior.ts";
+import { cellLeft, cellTop, drawCat } from "./render.ts";
+import { BOUNDS, FRAME_COLS, PIXEL_SCALE } from "./sprites.ts";
+
 export interface Rect {
   x: number;
   y: number;
@@ -6,26 +10,42 @@ export interface Rect {
 }
 
 export class Cat {
-  #width: number;
-  #height: number;
+  readonly #width: number;
+  readonly #height: number;
+  readonly #behavior: CatBehavior;
 
-  constructor(width: number, height: number, _random: () => number = Math.random) {
+  constructor(width: number, height: number, random: () => number = Math.random) {
     this.#width = width;
     this.#height = height;
+    this.#behavior = new CatBehavior(width, random);
   }
 
-  update(_dtMs: number): void {}
+  update(dtMs: number): void {
+    this.#behavior.update(dtMs);
+  }
 
   draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "#e89b4a";
-    ctx.fillRect(this.#width - 64, this.#height - 48, 48, 48);
+    drawCat(ctx, this.#behavior, this.#width, this.#height);
   }
 
-  react(): void {}
+  react(): void {
+    this.#behavior.react();
+  }
 
-  setPaused(_paused: boolean): void {}
+  setPaused(paused: boolean): void {
+    this.#behavior.setPaused(paused);
+  }
 
   hitRect(): Rect {
-    return { x: this.#width - 64, y: this.#height - 48, width: 48, height: 48 };
+    const b = this.#behavior;
+    const bounds = BOUNDS[b.sprite];
+    const flipped = b.facing === -1;
+    const x0 = flipped ? FRAME_COLS - bounds.x1 : bounds.x0;
+    const x1 = flipped ? FRAME_COLS - bounds.x0 : bounds.x1;
+    const left = Math.max(cellLeft(b) + x0 * PIXEL_SCALE, 0);
+    const right = Math.min(cellLeft(b) + x1 * PIXEL_SCALE, this.#width);
+    const top = Math.max(cellTop(this.#height, b) + bounds.y0 * PIXEL_SCALE, 0);
+    const bottom = Math.min(cellTop(this.#height, b) + bounds.y1 * PIXEL_SCALE, this.#height);
+    return { x: left, y: top, width: Math.max(right - left, 0), height: Math.max(bottom - top, 0) };
   }
 }
