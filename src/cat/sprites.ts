@@ -241,60 +241,67 @@ const ARM_SWAT_OUT: Frame = [
 
 // Fill shapes below get an automatic outline.
 const SIDE_HEAD: Frame = [
-  ".b.....b....",
-  "bpb...bpb...",
-  "bbsbbbsbbbbb",
-  "bbbbwebbwebb",
-  "bbbbeebbeebw",
-  "sbbbbbbwwwwp",
-  "bbbbbbbbwwww",
-  ".bbbbbbbbbb.",
+  ".b.....b.....",
+  ".bb...bpb....",
+  "bbbbbbbbbb...",
+  "bbsbsbbbbbb..",
+  "bbbbbbbbwebb.",
+  "bbbbbbbbeebbb",
+  "sbbbbbbbbbwwp",
+  ".bbbbbbbwwww.",
+  "..bbbbwwww...",
 ];
 const SIDE_BODY: Frame = [
-  "..bbbbbbbbbb..",
-  ".bbsbbbsbbbsbb",
-  "bbbsbbbsbbbsbb",
-  "bbsbbbsbbbsbbb",
-  "bbbbbbbbbbbbww",
-  "bbbbwwwwwwwwww",
-  "bbbbwwwwwwwwww",
-  ".bbbwwwwwwwwb.",
-  "..bbbbbbbbbb..",
+  "...bbbbbbbbbbbb...",
+  ".bbbsbbbsbbbsbbbb.",
+  "bbbbsbbbsbbbsbbbbb",
+  "bbbbbsbbbsbbbsbbbb",
+  "bbbbbbbbbbbbbbbbbb",
+  "bbbbbbbbbbbbbbbbww",
+  ".bbbbbbbbbbbbbbww.",
+  "..bbbbbbbbbbbbbb..",
 ];
-const SIDE_TAIL: Frame = ["bb...", "bb...", "sb...", "bb...", "bs...", "bbb..", ".bbbb", "..bbb"];
+const SIDE_TAIL: Frame = [".bb..", "bb...", "bb...", "sb...", "bb...", ".bb..", ".bbb.", "..bbb"];
+
+type LegPose = "down" | "forward" | "back" | "lift";
+
+// Shapes for a leg whose hip is at column 0, drawn from the hip down to the ground.
+const LEG_POSES: Readonly<Record<LegPose, { rows: Frame; dx: number }>> = {
+  down: { rows: ["bb", "bb", "bb", "bb", "bb", "ww"], dx: 0 },
+  forward: { rows: ["bb..", "bb..", ".bb.", ".bb.", "..bb", "..ww"], dx: 0 },
+  back: { rows: ["..bb", "..bb", ".bb.", ".bb.", "bb..", "ww.."], dx: -2 },
+  lift: { rows: [".bb", ".bb", "bb.", "ww."], dx: -1 },
+};
+
+// Diagonal pairs move together: near front with far back, far front with near back.
+const GAIT: readonly LegPose[] = ["forward", "down", "back", "lift"];
 
 interface Leg {
   col: number;
   far: boolean;
-  step: number;
+  pose: LegPose;
 }
-
-const GAIT_X = [2, 0, -2, 0];
-const GAIT_LIFT = [0, 0, 1, 2];
 
 function legLayer(leg: Leg): Layer {
-  const x = leg.col + GAIT_X[leg.step]!;
-  const lift = GAIT_LIFT[leg.step]!;
-  const fill = leg.far ? "ss" : "bb";
-  const length = 5 - lift;
-  const rows = Array.from({ length }, (_, i) => (i === length - 1 ? "ww" : fill));
-  return { rows, x, y: 22 };
+  const { rows, dx } = LEG_POSES[leg.pose];
+  const fill = leg.far ? "s" : "b";
+  return { rows: rows.map((row) => row.replaceAll("b", fill)), x: leg.col + dx, y: 21 };
 }
 
-function sideCat(step: number, phased: boolean): Frame {
-  const k = (offset: number): number => (phased ? (step + offset) % 4 : 0);
+function sideCat(step: number | null): Frame {
+  const pose = (offset: number): LegPose => (step === null ? "down" : GAIT[(step + offset) % 4]!);
   const legs: Leg[] = [
-    { col: 8, far: true, step: k(2) },
-    { col: 12, far: true, step: k(0) },
-    { col: 5, far: false, step: k(0) },
-    { col: 16, far: false, step: k(2) },
+    { col: 8, far: true, pose: pose(0) },
+    { col: 18, far: true, pose: pose(2) },
+    { col: 5, far: false, pose: pose(2) },
+    { col: 15, far: false, pose: pose(0) },
   ];
   return compose(
     [
-      { rows: SIDE_TAIL, x: 1, y: 8 },
+      { rows: SIDE_TAIL, x: 1, y: 6 },
       ...legs.map(legLayer),
-      { rows: SIDE_BODY, x: 5, y: 13 },
-      { rows: SIDE_HEAD, x: 19, y: 9 },
+      { rows: SIDE_BODY, x: 4, y: 13 },
+      { rows: SIDE_HEAD, x: 18, y: 6 },
     ],
     true,
   );
@@ -323,54 +330,49 @@ const STRETCH: Frame = compose(
         line([4, "bbbbb"], [11, "bbbbbbbbbbbbbbbbbwwww"]),
         line([4, "wwwww"]),
       ],
-      x: 0,
+      x: -1,
       y: 9,
     },
   ],
   true,
 );
 
+// Curled up with the head on the paws and the tail wrapped around the front.
 const SLEEP_ROWS: Frame = [
-  ".b...b..................",
-  "bpbbbpb.................",
-  "bbbbbbbbbbbbbbbbbb......",
-  "bbbsbbbbbbbbsbbbbsbbbb..",
-  "bbeebeebbbbbbsbbbbsbbbbb",
-  "bbbbpbbbbbbbsbbbbbbsbbbb",
-  "bbbwwwbbbbbbbbsbbbbsbbb",
-  "bbbbbsbbbbbbsbbbbbsbbbbb",
-  "bbsbbbbbsbbbbbsbbbbbsbbb",
-  ".wwsbsbsbsbsbsbsbsbsbsb.",
-  "..wsbsbsbsbsbsbsbsbsbs..",
-  "...bbbbbbbbbbbbbbbbbb...",
+  "............bbbbbbb.....",
+  "..........bbbbsbbbsbbb..",
+  ".b....b..bbbsbbbsbbbsbb.",
+  "bpb..bpbobbbbsbbbsbbbsbb",
+  "bbbbbbbbobbbbbsbbbsbbbsb",
+  "bbbbbbbbosbbbbbsbbbsbbbb",
+  "boobboobobsbbbbbsbbbbbbb",
+  "bbbbpbbbobbsbbbbbbbbbbbb",
+  "sbwwwwbbobbbbbbbbbbbbbbs",
+  "owwwwwwoooooooooooooobbb",
+  "wwbbsbbbsbbbsbbbsbbbbbb.",
+  ".bbbbbbbbbbbbbbbbbbbbb..",
 ];
+const SLEEP_BREATH: Frame = ["...bbbbb...", "bbbbbbbbbbb"];
 
-function loafBody(): Frame {
-  const fillRows = [
-    "bbsbbbbb" + "wwww" + "bbbbbsbb",
-    "bbbbsbbb" + "wwww" + "bbsbbbbb",
-    "bsbbbbbb" + "bwwb" + "bbbbbbsb",
-    "bbbsbbbb" + "bbbb" + "bbbbsbbb",
-    "bbbbbbsb" + "bbbb" + "bsbbbbbb",
-    "bbbbbbwwwwbbwwwwbbbb",
-  ];
-  return [
-    "....o" + "bbbbbbbbbbbb" + "o....",
-    "...o" + "bbbsbbbbbbsbbb" + "o...",
-    "..o" + "bbbbbbbbbbbbbbbb" + "o..",
-    ".o" + "bbsbbbbbwwbbbbbsbb" + "o.",
-    ...fillRows.map((row) => `o${row}o`),
-    ".oooooooooooooooooooo.",
-  ];
-}
+const LOAF_BODY: Frame = [
+  "..oobbbbbbbbbboo..",
+  ".obbbsbbbbbbsbbbo.",
+  "obbsbbbbwwbbbbsbbo",
+  "obbbbbbwwwwbbbbbbo",
+  "obsbbbbwwwwbbbsbbo",
+  "obbbsbbbwwbbsbbbbo",
+  "obbbbbbbbbbbbbbbbo",
+  "obbbwwwbbbbwwwbbbo",
+  ".oooooooooooooooo.",
+];
 
 const TAIL_LOAF: Frame = [".oo..", "obbo.", "obbso", "obbbo", "obbo.", "ooo.."];
 
 function loaf(head: Frame): Frame {
   return compose([
-    { rows: TAIL_LOAF, x: 27, y: 22 },
-    { rows: loafBody(), x: 5, y: 17 },
-    { rows: head, x: 8, y: 5 },
+    { rows: TAIL_LOAF, x: 24, y: 22 },
+    { rows: LOAF_BODY, x: 7, y: 19 },
+    { rows: head, x: 8, y: 9 },
   ]);
 }
 
@@ -387,11 +389,11 @@ function build(): Record<SpriteName, Frame> {
     sit_tail_up: sitFrame(HEAD, TAIL_AT_UP),
     groom_a: arm(HEAD_BLINK, ARM_RAISED, 19, 9),
     groom_b: arm(HEAD_LICK, ARM_RAISED, 19, 8),
-    stand: sideCat(0, false),
-    walk_0: sideCat(0, true),
-    walk_1: sideCat(1, true),
-    walk_2: sideCat(2, true),
-    walk_3: sideCat(3, true),
+    stand: sideCat(null),
+    walk_0: sideCat(0),
+    walk_1: sideCat(1),
+    walk_2: sideCat(2),
+    walk_3: sideCat(3),
     stretch: STRETCH,
     yawn_a: sitFrame(HEAD_YAWN_A),
     yawn_b: sitFrame(HEAD_YAWN_B),
@@ -402,8 +404,8 @@ function build(): Record<SpriteName, Frame> {
     sleep_a: compose([{ rows: SLEEP_ROWS, x: 4, y: 15 }], true),
     sleep_b: compose(
       [
+        { rows: SLEEP_BREATH, x: 13, y: 14 },
         { rows: SLEEP_ROWS, x: 4, y: 15 },
-        { rows: ["bbbbbbbbbbb"], x: 12, y: 16 },
       ],
       true,
     ),
