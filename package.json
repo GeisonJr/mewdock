@@ -1,0 +1,26 @@
+{
+  "name": "mewdock",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build --bundles app",
+    "install:mac": "pnpm build && rm -rf /Applications/Mewdock.app && ditto src-tauri/target/release/bundle/macos/Mewdock.app /Applications/Mewdock.app",
+    "icons": "node scripts/make-icons.ts && tauri icon src-tauri/icons/app-icon.png",
+    "web:dev": "vite",
+    "web:build": "vite build",
+    "typecheck": "tsc --noEmit && cargo check --manifest-path src-tauri/Cargo.toml",
+    "test": "node --test 'src/**/*.test.ts' && cargo test --manifest-path src-tauri/Cargo.toml"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.12.4"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
